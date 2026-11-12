@@ -1,0 +1,24 @@
+from collections.abc import Iterator
+
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session, sessionmaker
+
+from app.config import settings
+
+engine = create_engine(settings.database_url, pool_pre_ping=True)
+SessionLocal = sessionmaker(engine, expire_on_commit=False)
+
+
+def get_db() -> Iterator[Session]:
+    with SessionLocal() as session:
+        yield session
+
+
+def database_is_available() -> bool:
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+    except SQLAlchemyError:
+        return False
+    return True
